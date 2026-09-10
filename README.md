@@ -1,55 +1,55 @@
 # PISA: Malaysia & Beyond
 
-Created by Foo Huey Chyun. An interactive, mobile-friendly geographical map and comparison table for a curated PISA 2025 snapshot.
+Created by Foo Huey Chyun. A static PISA 2025 explorer with Malaysia as the comparison anchor.
 
 ## Publish through GitHub and Vercel
 
-1. Unzip this archive on your computer.
-2. Create a GitHub repository, for example `pisa-malaysia-beyond`.
-3. Upload the CONTENTS of the extracted folder. `package.json`, `vercel.json`, `validate.mjs` and `dist` must sit at the repository root. Keep the `dist` folder intact.
-4. In Vercel, choose Add New → Project then import the repository.
-5. Choose Framework Preset **Other**. Leave Root Directory at the repository root. Build Command is `npm run build`. Output Directory is `dist`. The supplied `vercel.json` specifies these settings.
-6. Deploy. No environment variables or API keys are needed.
-7. Open the resulting URL. Check the map loads and select Singapore, change subject then return to Malaysia. Check a phone viewport too.
+1. Unzip this archive.
+2. Upload its contents to your existing GitHub repository, replacing the earlier files. Keep `dist` intact. `package.json`, `vercel.json` and `validate.mjs` belong at the repository root.
+3. Import the repository into Vercel if it is not connected already.
+4. Use Framework Preset **Other**, Build Command `npm run build` and Output Directory `dist`. The supplied Vercel configuration specifies these settings. No API keys or environment variables are needed.
+5. Deploy, or let your existing GitHub integration redeploy the changes.
 
-Do not choose Next.js. This is a complete static website with no npm dependencies. The small file count is intentional. There is no node_modules folder to upload.
+## What's included
 
-## Included interactions
+- International view for all 91 countries and economies in the OECD science table.
+- Southeast Asia view, with eight systems that have science results.
+- Shaded country boundaries, hover details, selection outlines and a readable legend.
+- Representative dots for small economies and regional results.
+- Country search, subject buttons, mean scores or gaps versus Malaysia.
+- Selected country, Malaysia and OECD comparison bars.
+- Sortable full comparison table, trends and sampling cautions.
+- Creator credit only in the footer.
+- Search and tables remain usable if external map services fail. Country dots are shown if boundaries fail but Leaflet loads.
 
-- Panning and zooming on a geographical OpenStreetMap basemap.
-- Keyboard-accessible country markers and country table buttons.
-- Science, mathematics, reading and computational problem-solving.
-- Mean scores or gaps versus Malaysia.
-- Southeast Asia view and selected international benchmarks (Japan and Estonia).
-- Country details, changes since 2022, significance notes and OECD source links.
-- Clearly marked missing values. Tables work if the mapping CDN or tiles cannot load.
+## Data coverage
 
-## Data and interpretation
+Snapshot checked 10 September 2026. Science covers 91 systems, computational problem-solving 85 and mathematics and reading 87 each. Maths and reading for Uzbekistan, Cyprus, Kenya and Rwanda remain unverified in this snapshot. Missing values are null and never imply zero, nonparticipation or poor performance.
 
-`dist/data.js` contains manually curated data from the OECD pages referenced in each record, verified in the preparation conversation on 10 September 2026. Release: 8 September 2026. This is not an automated or comprehensive dataset. The 2025 values have not been independently audited against downloaded OECD statistical tables. Confirm the primary records before using this site for formal reporting.
+Science and computational problem-solving means come from OECD PISA 2025 Results Volume I, Tables I.2.1 and I.2.4:
+https://www.oecd.org/en/publications/pisa-2025-results-volume-i_73451bc5-en/full-report/student-performance-in-pisa-2025_23e075c2.html
 
-Core mean scores (math / reading / science): Malaysia 397/393/419; Singapore 563/535/560; Vietnam 443/392/457; Brunei 435/426/439; Thailand 407/392/432; Indonesia 364/365/389; Philippines 371/367/373; Japan 525/503/538. Estonia includes science 527 only. All missing values are null and must remain null until verified. Cambodia's science low-performer percentage is approximately 67%, calculated as 100 minus the rounded 33% meeting baseline. Laos, Myanmar and Timor-Leste have no verified scores in this snapshot.
+Mathematics, reading, low performers and trends come from linked OECD Education GPS profiles. B-S-J-Z mathematics and reading means come from the report. Cambodia's mathematics and reading means were also verified in Education GPS.
 
-Vietnam's transition from paper-based testing makes trend comparisons uncertain. No Vietnam trend values are shown. NS annotations are retained in the `ns` array. Gaps use rounded scores, not statistical significance tests. Different domains have distinct scales. Map colour bands are site-defined, not PISA proficiency levels. Pins indicate representative national locations, not sampling locations. Malaysia includes both Peninsular and East Malaysia in its national figure.
+This is a manually maintained snapshot, not a live data feed. Each record in `dist/data.js` links the report and its country profile. Gaps use rounded scores and are not significance tests. Subject scales are different. Colour bands are descriptive, not OECD proficiency levels. Trend figures may differ from subtraction of rounded scores. Vietnam's trends are excluded due to assessment-mode comparability concerns. Asterisks preserve the OECD sampling cautions for Canada, New Zealand, United States, Netherlands, Norway and Albania.
 
-To update data, edit `dist/data.js`, update visible dates in `dist/index.html`, run `npm run build` then commit to GitHub. Vercel will redeploy when connected to that repository.
+B-S-J-Z (China), Ukrainian regions (17 of 27), Kurdistan Region (Iraq) and Dushanbe (Tajikistan) are regional results. They use representative points and never shade all of their parent countries. Dots are navigation aids, not sample locations or coverage boundaries. The low-resolution world map simplifies boundaries and may omit small islands. Search and the table include every one of the 91 records regardless of map geometry. Boundaries do not imply any position on territorial status.
 
-## Sources and external services
+## External map services
 
-Data: OECD Education GPS and PISA 2025 country notes, linked in the interface and data file. Primary release:
-https://www.oecd.org/en/about/news/press-releases/2026/09/pisa-2025-students-reading-and-mathematics-performance-declined-sharply-across-the-oecd.html
+Leaflet 1.9.4 is loaded from unpkg with integrity verification. TopoJSON Client 3.1.0 and world-atlas 2.0.2 are loaded from jsDelivr. Visitors need internet access to these providers. Natural Earth country geometry is public domain. No street tiles, accounts, tracking scripts or app database are used.
 
-Independent presentation; not affiliated with or endorsed by OECD. Attribution does not imply endorsement.
+- Leaflet BSD-2-Clause licence: https://github.com/Leaflet/Leaflet/blob/v1.9.4/LICENSE
+- TopoJSON Client ISC licence: https://github.com/topojson/topojson-client/blob/v3.1.0/LICENSE
+- world-atlas ISC licence: https://github.com/topojson/world-atlas/blob/master/LICENSE
+- Natural Earth terms: https://www.naturalearthdata.com/about/terms-of-use/
 
-Leaflet 1.9.4 is loaded from unpkg with integrity verification. Leaflet is BSD-2-Clause licensed: https://github.com/Leaflet/Leaflet/blob/v1.9.4/LICENSE
+Data: OECD. Independent presentation, not affiliated with or endorsed by the OECD.
 
-Map data © OpenStreetMap contributors, ODbL: https://www.openstreetmap.org/copyright
-Tiles: https://tile.openstreetmap.org. Comply with https://operations.osmfoundation.org/policies/tiles/ . The site retains visible attribution, sends normal browser referrers and does not prefetch or bulk-download tiles. For substantial traffic, use an appropriate hosted tile provider and update its attribution and URL in `dist/app.js`.
+## Validation and updates
 
-Visitors need internet access to unpkg.com and tile.openstreetmap.org for the basemap. Their browsers contact these third parties. There is no analytics tracker, account system or app database.
+Run `npm run build` with Node.js. Validation checks syntax, assets, all 91 records, per-subject coverage, missing values, regional exclusions, sampling flags and representative Malaysia comparisons. Browser rendering, external map delivery and optional WebMCP runtime behaviour have not been tested in this environment.
 
-## Validation
+To change a score, edit `dist/data.js`, retain its source and missing-value semantics, update coverage checks and visible snapshot notes then run the build before publishing.
 
-Run `npm run build` (requires Node.js). This checks local assets, JavaScript syntax, data types, missing values and representative calculations. Browser rendering and external tile delivery were not tested in the build environment. An optional WebMCP selection action is feature-detected; unsupported browsers use the normal interface. WebMCP runtime validation was unavailable.
-
-Local preview, if Python is installed: `python -m http.server 8000 --directory dist` then open http://localhost:8000. Opening HTML directly via file:// will not load JavaScript modules; use a server or Vercel.
+To preview on your own computer: `python -m http.server 8000 --directory dist` then visit http://localhost:8000. Opening HTML directly from the filesystem will not load JavaScript modules.
