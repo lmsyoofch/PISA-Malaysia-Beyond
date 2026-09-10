@@ -53,3 +53,7 @@ Run `npm run build` with Node.js. Validation checks syntax, assets, all 91 recor
 To change a score, edit `dist/data.js`, retain its source and missing-value semantics, update coverage checks and visible snapshot notes then run the build before publishing.
 
 To preview on your own computer: `python -m http.server 8000 --directory dist` then visit http://localhost:8000. Opening HTML directly from the filesystem will not load JavaScript modules.
+
+## Mobile map update
+
+Small-economy and regional dots now use fixed pixel radii (4 px on phones and 5 px on larger screens). Zoom animations are disabled to avoid transient scaling. The international overview uses a landscape frame and fractional zoom to fit the whole world. It refits when the screen changes size while in overview mode. A manually explored or searched view stays in place until Reset view is selected.
