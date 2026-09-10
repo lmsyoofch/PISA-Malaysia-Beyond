@@ -1,7 +1,7 @@
 import {countries,subjects,malaysia,oecd,value,format,signed,colour} from './data.js';
 const $=id=>document.getElementById(id);
 const state={subject:'science',mode:'score',region:'sea',selected:malaysia,sort:'score'};
-let map,land,points;
+let mapSvg,mapRoot,mapProjection,mapPath,mapZoom,features=[];
 const countryLayers=new Map();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const visible=()=>countries.filter(c=>state.region==='global'||c.region==='sea');
@@ -9,19 +9,19 @@ const countryFor=f=>countries.find(c=>!c.regional&&(c.mapName===f.properties.nam
 const active=c=>c&&(state.region==='global'||c.region==='sea');
 const gapText=n=>n===null?'No verified score for this subject':n===0?'Same mean score as Malaysia':`${Math.abs(n)} points ${n>0?'above':'below'} Malaysia`;
 const trend=c=>c.changes[state.subject]==null?'Not available':`${signed(c.changes[state.subject])}${c.ns.includes(state.subject)?'†':''}`;
-function select(c,fly=true){state.selected=c;if(c.region!=='sea'&&state.region==='sea')state.region='global';render();if(map&&fly){const layer=countryLayers.get(c.code);if(layer&&!c.regional&&c.code!=='FRA')map.fitBounds(layer.getBounds(),{padding:[45,45],maxZoom:5,animate:false});else map.setView([c.lat,c.lng],c.regional?4:5,{animate:false});}}
-function fit(){if(map)map.fitBounds(state.region==='sea'?[[-13,91],[26,142]]:[[-56,-172],[77,180]],{padding:[10,10],animate:false});}
-function tooltip(c){return `<strong>${esc(c.name)}${c.caution?'*':''}</strong><br>${esc(subjects[state.subject])}: ${format(c[state.subject])}<br>${gapText(value(c,state.subject,'gap'))}${c.regional?'<br>Regional result':''}`;}
-function style(f){const c=countryFor(f),selected=active(c)&&c.code===state.selected.code;return {color:selected?'#315ad8':'#ffffff',weight:selected?2.8:.8,fillColor:colour(active(c)?value(c,state.subject,state.mode):null,state.mode),fillOpacity:1};}
+function select(c,fly=true){state.selected=c;if(c.region!=='sea'&&state.region==='sea')state.region='global';render();if(mapSvg&&fly)zoomToCountry(c);}
+function mapSize(){const el=$('map');return [Math.max(320,el.clientWidth),Math.max(320,el.clientHeight)];}
+function resetProjection(){if(!mapSvg)return;const [w,h]=mapSize();mapSvg.attr('viewBox',`0 0 ${w} ${h}`);mapProjection=d3.geoNaturalEarth1().fitExtent([[12,12],[w-12,h-12]],{type:'Sphere'});mapPath=d3.geoPath(mapProjection);if(mapRoot){mapRoot.selectAll('path.country').attr('d',mapPath);mapRoot.selectAll('circle.map-point').attr('cx',d=>mapProjection([d.lng,d.lat])?.[0]??-99).attr('cy',d=>mapProjection([d.lng,d.lat])?.[1]??-99);}}
+function fit(){if(!mapSvg||!mapZoom)return;const [w,h]=mapSize();let t=d3.zoomIdentity;if(state.region==='sea'){const pts=[[91,-13],[142,26]].map(([lng,lat])=>mapProjection([lng,lat]));const x0=Math.min(pts[0][0],pts[1][0]),x1=Math.max(pts[0][0],pts[1][0]),y0=Math.min(pts[0][1],pts[1][1]),y1=Math.max(pts[0][1],pts[1][1]);const k=Math.min(7,.88/Math.max((x1-x0)/w,(y1-y0)/h));t=d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-(x0+x1)/2,-(y0+y1)/2);}mapSvg.call(mapZoom.transform,t);}
+function zoomToCountry(c){if(!mapSvg||!mapZoom)return;if(c.regional||!countryLayers.has(c.code)){const p=mapProjection([c.lng,c.lat]);if(!p)return;const [w,h]=mapSize();mapSvg.call(mapZoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(4).translate(-p[0],-p[1]));return;}const f=countryLayers.get(c.code),b=mapPath.bounds(f),[w,h]=mapSize();const dx=b[1][0]-b[0][0],dy=b[1][1]-b[0][1],x=(b[0][0]+b[1][0])/2,y=(b[0][1]+b[1][1])/2,k=Math.min(6,.72/Math.max(dx/w,dy/h));mapSvg.call(mapZoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-x,-y));}
+function tooltip(c){return `${c.name}${c.caution?'*':''}\n${subjects[state.subject]}: ${format(c[state.subject])}\n${gapText(value(c,state.subject,'gap'))}${c.regional?'\nRegional result':''}`;}
+function styleValues(f){const c=countryFor(f),selected=active(c)&&c.code===state.selected.code;return {stroke:selected?'#315ad8':'#ffffff',width:selected?2.8:.8,fill:colour(active(c)?value(c,state.subject,state.mode):null,state.mode)};}
 function paintMap(){
- if(!map)return;
- if(land){land.setStyle(style);land.eachLayer(layer=>{const c=countryFor(layer.feature);layer.setTooltipContent(c?tooltip(c):`<strong>${esc(layer.feature.properties.name)}</strong><br>No result in this snapshot`);if(c?.code===state.selected.code)layer.bringToFront();});}
- points.clearLayers();
- for(const c of visible()){
-  if(land&&countryLayers.has(c.code)&&!c.regional&&!['SGP','BRN','LUX','QAT','PSE'].includes(c.code))continue;
-  const icon=L.divIcon({className:`point${c.code===state.selected.code?' selected':''}`,html:`<span style="background:${colour(value(c,state.subject,state.mode),state.mode)}"></span>`,iconSize:[15,15],iconAnchor:[7,7]});
-  L.marker([c.lat,c.lng],{icon,title:`${c.name}: ${format(c[state.subject])}`,keyboard:true}).addTo(points).bindTooltip(tooltip(c),{direction:'top'}).on('click',()=>select(c,false));
- }
+ if(!mapRoot)return;
+ mapRoot.selectAll('path.country').attr('fill',f=>styleValues(f).fill).attr('stroke',f=>styleValues(f).stroke).attr('stroke-width',f=>styleValues(f).width).each(function(f){const c=countryFor(f);d3.select(this).select('title').text(c?tooltip(c):`${f.properties.name}\nNo result in this snapshot`);});
+ const dots=visible().filter(c=>c.regional||!countryLayers.has(c.code)||['SGP','BRN','LUX','QAT','PSE'].includes(c.code));
+ const sel=mapRoot.select('g.points').selectAll('circle.map-point').data(dots,d=>d.code).join('circle').attr('class',d=>`map-point${d.code===state.selected.code?' selected':''}`).attr('r',7).attr('cx',d=>mapProjection([d.lng,d.lat])?.[0]??-99).attr('cy',d=>mapProjection([d.lng,d.lat])?.[1]??-99).attr('fill',d=>colour(value(d,state.subject,state.mode),state.mode)).attr('stroke','#fff').attr('stroke-width',2).attr('tabindex',0).attr('role','button').attr('aria-label',d=>tooltip(d).replaceAll('\n',', ')).on('click',(e,d)=>select(d,false)).on('keydown',(e,d)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(d,false);}});
+ sel.selectAll('title').data(d=>[d]).join('title').text(tooltip);
 }
 function render(){
  const {subject:s,selected:c}=state,list=visible();
@@ -51,22 +51,21 @@ function render(){
  $('search-form').addEventListener('submit',e=>{e.preventDefault();const query=$('search').value.trim().toLowerCase();const aliases={vietnam:'VNM',brunei:'BRN','south korea':'KOR',taiwan:'TWN',china:'BSZ','hong kong':'HKG',macao:'MAC',macau:'MAC',uk:'GBR',usa:'USA'};const c=countries.find(x=>x.name.toLowerCase()===query||x.code.toLowerCase()===query||x.code===aliases[query])||(query?countries.find(x=>x.name.toLowerCase().includes(query)):null);if(c){$('search').value=c.name;select(c);$('search').setCustomValidity('');}else{$('search').setCustomValidity('Choose one of the 91 countries and economies in the list.');$('search').reportValidity();}});
 render();
 async function initialiseMap(){
- if(!window.L){$('map-status').textContent='The mapping service could not load. Country search and the comparison table remain available.';return;}
- map=L.map('map',{scrollWheelZoom:false,minZoom:1,maxZoom:8,worldCopyJump:false,preferCanvas:false,maxBounds:[[-85,-190],[85,190]],maxBoundsViscosity:.8});
- // Keep world polygons intact. Leaflet's viewport clipping can create long horizontal
- // artefacts on large/high-latitude polygons (notably Canada and Russia).
- const boundaryRenderer=L.svg({padding:1});
- map.attributionControl.addAttribution('Geography: <a href="https://www.naturalearthdata.com/">Natural Earth</a>');
- points=L.layerGroup().addTo(map);fit();paintMap();
- let resizeFrame; new ResizeObserver(()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>map.invalidateSize({pan:false,animate:false}));}).observe($('map'));
+ if(!window.d3){$('map-status').textContent='The mapping service could not load. Country search and the comparison table remain available.';return;}
+ const host=d3.select('#map');host.selectAll('*').remove();
+ mapSvg=host.append('svg').attr('class','world-svg').attr('role','img').attr('aria-label','Interactive PISA world map');
+ mapRoot=mapSvg.append('g').attr('class','map-root');mapRoot.append('g').attr('class','countries');mapRoot.append('g').attr('class','points');
+ mapZoom=d3.zoom().scaleExtent([1,8]).on('zoom',e=>mapRoot.attr('transform',e.transform));mapSvg.call(mapZoom).on('dblclick.zoom',null);
+ resetProjection();
  try{
-  const response=await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json',{signal:AbortSignal.timeout(15000)});
-  if(!response.ok)throw Error('Map download failed');
+  const response=await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json',{signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error('Map download failed');
   const topology=await response.json();if(!window.topojson)throw Error('Boundary reader unavailable');
-  const features=topojson.feature(topology,topology.objects.countries).features.filter(f=>f.properties.name!=='Antarctica');
-  land=L.geoJSON(features,{renderer:boundaryRenderer,noClip:true,smoothFactor:0,style,onEachFeature:(f,layer)=>{const c=countryFor(f);if(c)countryLayers.set(c.code,layer);layer.bindTooltip(c?tooltip(c):`<strong>${esc(f.properties.name)}</strong><br>No result in this snapshot`);layer.on({click:()=>{if(c)select(c,false);else layer.openTooltip();},mouseover:()=>layer.setStyle({weight:2,color:'#688d9e'}),mouseout:()=>layer.setStyle(style(f))});}}).addTo(map);
-  paintMap();$('map-status').textContent='';
- }catch(error){$('map-status').textContent='Country boundaries could not load. Showing country dots instead; search and all comparisons still work.';}
+  features=topojson.feature(topology,topology.objects.countries).features.filter(f=>f.properties.name!=='Antarctica');
+  countryLayers.clear();features.forEach(f=>{const c=countryFor(f);if(c)countryLayers.set(c.code,f);});
+  mapRoot.select('g.countries').selectAll('path.country').data(features).join('path').attr('class','country').attr('d',mapPath).attr('vector-effect','non-scaling-stroke').attr('tabindex',f=>countryFor(f)?0:null).attr('role',f=>countryFor(f)?'button':null).on('click',(e,f)=>{const c=countryFor(f);if(c)select(c,false);}).on('keydown',(e,f)=>{const c=countryFor(f);if(c&&(e.key==='Enter'||e.key===' ')){e.preventDefault();select(c,false);}}).each(function(f){d3.select(this).append('title');});
+  paintMap();$('map-status').textContent='';fit();
+ }catch(error){$('map-status').textContent='Country boundaries could not load. Search and all comparisons still work.';paintMap();}
+ let resizeFrame;new ResizeObserver(()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{resetProjection();fit();paintMap();});}).observe($('map'));
 }
 initialiseMap();
 // Optional WebMCP support uses the same visible selection action.
