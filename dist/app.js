@@ -52,8 +52,10 @@ function render(){
 render();
 async function initialiseMap(){
  if(!window.L){$('map-status').textContent='The mapping service could not load. Country search and the comparison table remain available.';return;}
- map=L.map('map',{scrollWheelZoom:false,minZoom:1,maxZoom:8,worldCopyJump:false,preferCanvas:true,maxBounds:[[-85,-190],[85,190]],maxBoundsViscosity:.8});
- const boundaryRenderer=L.canvas({padding:0.35});
+ map=L.map('map',{scrollWheelZoom:false,minZoom:1,maxZoom:8,worldCopyJump:false,preferCanvas:false,maxBounds:[[-85,-190],[85,190]],maxBoundsViscosity:.8});
+ // Keep world polygons intact. Leaflet's viewport clipping can create long horizontal
+ // artefacts on large/high-latitude polygons (notably Canada and Russia).
+ const boundaryRenderer=L.svg({padding:1});
  map.attributionControl.addAttribution('Geography: <a href="https://www.naturalearthdata.com/">Natural Earth</a>');
  points=L.layerGroup().addTo(map);fit();paintMap();
  let resizeFrame; new ResizeObserver(()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>map.invalidateSize({pan:false,animate:false}));}).observe($('map'));
@@ -62,7 +64,7 @@ async function initialiseMap(){
   if(!response.ok)throw Error('Map download failed');
   const topology=await response.json();if(!window.topojson)throw Error('Boundary reader unavailable');
   const features=topojson.feature(topology,topology.objects.countries).features.filter(f=>f.properties.name!=='Antarctica');
-  land=L.geoJSON(features,{renderer:boundaryRenderer,style,onEachFeature:(f,layer)=>{const c=countryFor(f);if(c)countryLayers.set(c.code,layer);layer.bindTooltip(c?tooltip(c):`<strong>${esc(f.properties.name)}</strong><br>No result in this snapshot`);layer.on({click:()=>{if(c)select(c,false);else layer.openTooltip();},mouseover:()=>layer.setStyle({weight:2,color:'#688d9e'}),mouseout:()=>layer.setStyle(style(f))});}}).addTo(map);
+  land=L.geoJSON(features,{renderer:boundaryRenderer,noClip:true,smoothFactor:0,style,onEachFeature:(f,layer)=>{const c=countryFor(f);if(c)countryLayers.set(c.code,layer);layer.bindTooltip(c?tooltip(c):`<strong>${esc(f.properties.name)}</strong><br>No result in this snapshot`);layer.on({click:()=>{if(c)select(c,false);else layer.openTooltip();},mouseover:()=>layer.setStyle({weight:2,color:'#688d9e'}),mouseout:()=>layer.setStyle(style(f))});}}).addTo(map);
   paintMap();$('map-status').textContent='';
  }catch(error){$('map-status').textContent='Country boundaries could not load. Showing country dots instead; search and all comparisons still work.';}
 }
