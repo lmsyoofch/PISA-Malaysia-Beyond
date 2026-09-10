@@ -57,3 +57,7 @@ To preview on your own computer: `python -m http.server 8000 --directory dist` t
 ## Mobile map update
 
 Small-economy and regional dots now use fixed pixel radii (4 px on phones and 5 px on larger screens). Zoom animations are disabled to avoid transient scaling. The international overview uses a landscape frame and fractional zoom to fit the whole world. It refits when the screen changes size while in overview mode. A manually explored or searched view stays in place until Reset view is selected.
+
+## World boundary correction
+
+Country polygons are split at the international date line before rendering, preventing edges from crossing the full map. The build includes regression checks for crossing polygons, exact date-line coordinates and preserved polygon area.
