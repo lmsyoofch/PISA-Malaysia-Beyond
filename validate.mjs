@@ -32,3 +32,21 @@ assert(JSON.stringify(splitDateLine(ordinary).geometry.coordinates[0])===JSON.st
 const seam=splitDateLine(fixture([[179,60],[-180,60],[-180,65],[179,65],[179,60]]));
 assert(seam.geometry.coordinates.length===1&&planarArea(seam.geometry.coordinates[0][0])===5,'Exact seam produced a world-spanning sliver');
 console.log('Validated date line splitting, preserved polygon area and exact-seam boundaries.');
+const {regions,regionOf,members,pageOf,quests,walkRoute}=await import('./dist/world-model.js');
+for(const f of ['compare.html','world.css','world.js','world-model.js','vendor/three.module.js','vendor/THREE-LICENSE.txt'])assert(fs.existsSync('dist/'+f),'Missing world asset '+f);
+for(const f of ['world.js','world-model.js'])execFileSync(process.execPath,['--check','dist/'+f]);
+assert(Object.keys(regions).flatMap(members).length===91,'Regional directory must cover every country');
+for(const c of countries)assert(members(regionOf(c)).slice(pageOf(c)*8,pageOf(c)*8+8).some(x=>x.code===c.code),'Country unreachable '+c.code);
+assert(quests[0].test(new Set(['MYS','SGP','THA'])),'Neighbour quest fails');
+assert(!quests[0].test(new Set(['MYS','SGP'])),'Neighbour quest completes too early');
+assert(quests[1].test(new Set(['PHL']),new Set(['PHL'])),'Significant improvement quest fails');
+assert(!quests[1].test(new Set(['MYS']),new Set(['MYS'])),'Non-significant change incorrectly accepted');
+assert(quests[2].test(new Set(['MYS','JPN','EST'])),'Regional exploration quest fails');
+const pavilionPositions=Array.from({length:8},(_,i)=>({x:i%2===0?-11:11,z:-14+Math.floor(i/2)*9}));
+const blocked=(x,z)=>Math.hypot(x,z)>23||Math.hypot(x,z+5)<2.5||pavilionPositions.some(p=>Math.abs(x-p.x)<2.8&&Math.abs(z-p.z)<2.3);
+for(const start of [{x:0,z:5},...pavilionPositions.map(p=>({x:p.x,z:p.z+3}))])for(const p of pavilionPositions){
+ const route=walkRoute(start,{x:p.x,z:p.z+3},blocked);assert(route.length>0,'Pavilion has no walking route');
+ for(let i=1;i<route.length;i++){const a=route[i-1],b=route[i],steps=Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1]))*4;
+ for(let j=0;j<=steps;j++){const t=steps?j/steps:0;assert(!blocked(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t),'Walking route crosses an obstacle');}}
+}
+console.log('Validated all 91 world destinations, discovery quests and walking routes between all pavilion entrances.');

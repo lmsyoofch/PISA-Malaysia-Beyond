@@ -75,3 +75,9 @@ async function initialiseMap(){
 initialiseMap();
 // Optional WebMCP support uses the same visible selection action.
 if(document.modelContext?.registerTool){try{Promise.resolve(document.modelContext.registerTool({name:'select_pisa_comparison',description:'Select a country or economy and subject in the PISA comparison map.',inputSchema:{type:'object',properties:{countryCode:{type:'string',enum:countries.map(c=>c.code)},subject:{type:'string',enum:Object.keys(subjects)}},required:['countryCode','subject'],additionalProperties:false},annotations:{readOnlyHint:false},execute:input=>{const c=countries.find(c=>c.code===input?.countryCode);if(!c||!Object.hasOwn(subjects,input?.subject))throw Error('Choose a listed country and subject.');state.subject=input.subject;select(c);return {country:c.name,subject:subjects[state.subject],score:c[state.subject],malaysia:malaysia[state.subject],oecd:oecd[state.subject]};}})).catch(()=>{});}catch{}}
+
+// Restore a country and subject selected in the learning world.
+const incoming=new URLSearchParams(location.search);
+if(Object.hasOwn(subjects,incoming.get("subject")))state.subject=incoming.get("subject");
+const requested=countries.find(c=>c.code===incoming.get("country"));
+if(requested){select(requested,false);fit();}else render();

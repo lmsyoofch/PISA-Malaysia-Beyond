@@ -1,3 +1,36 @@
+# PISA: Malaysia & Beyond, Learning World
+
+The default page is now an interactive 3D learning garden. Start at Malaysia plaza, walk an avatar to country pavilions and explore results through four subject gateways. The previous map, charts and table remain at `compare.html`.
+
+## Deploy this update
+
+1. Unzip the archive.
+2. Replace the existing files in your GitHub repository with ALL of these contents. Keep `dist/vendor` and all other folders intact. Do not upload the ZIP itself.
+3. Keep Vercel Framework Preset **Other**, Build Command `npm run build` and Output Directory `dist`.
+4. Let the GitHub integration deploy the update, or redeploy the project in Vercel.
+
+No API key is needed. The complete Three.js 0.170.0 engine and its MIT licence are included. The learning world needs WebGL, but does not fetch its 3D engine from a third-party CDN. The retained geographical map still uses its previously documented external map providers.
+
+## Explore
+
+- Tap open ground to walk. Tap a pavilion or its name to walk there and open the results.
+- Drag to rotate. Pinch or use + / − to zoom. Use the home button to return to Malaysia plaza.
+- Focus the scene and use WASD or arrow keys to walk with a keyboard.
+- Use the region selector or blue portals to travel between seven regional campuses. Arrows page through sets of up to eight equal-sized pavilions.
+- Four coloured gateways and the subject buttons switch the domain.
+- Search and the country directory reach all 91 entries, including those on another campus or page.
+- Three discovery quests track the current visit. Progress is not stored after a reload.
+- Country panels include Malaysia and OECD comparison bars, changes, cautions and primary-source links. Full comparison links retain the selected country and subject.
+- If WebGL fails, the country directory and results panels remain usable.
+
+## Design and interpretation
+
+This is an original procedural 3D learning space, not a real place or geographical map. Buildings have equal size and never encode score or national wealth. Campus groupings serve navigation. The avatar, buildings and trees are original procedural geometry; they do not replicate the reference video's assets. Data and missing values are carried over from the existing snapshot. Creator credit is in the footer.
+
+Validation covers JavaScript syntax, required assets, coverage of all 91 destinations, country-to-campus routing, discovery quest conditions and collision-free planned paths between all pavilion entrances. The build also retains data and geographical-boundary checks. Actual browser rendering, touch interaction and phone performance have not been tested in this environment.
+
+---
+
 # PISA: Malaysia & Beyond
 
 Created by Foo Huey Chyun. A static PISA 2025 explorer with Malaysia as the comparison anchor.
