@@ -98,3 +98,7 @@ Country polygons are split at the international date line before rendering, prev
 ## Follow camera update
 
 The regional starting area is named Southeast Asia plaza. Selecting a pavilion smoothly moves the camera closer and follows the walking avatar. The close view stays at arrival; Reset camera returns to the regional overview. Changing campus or returning home also resets the camera. Reduced-motion preferences make the camera transition immediate.
+
+## Comparison courtyard playtest
+
+Visit a pavilion to collect its card. Malaysia is pinned and up to three other cards can be selected. Walk to the courtyard, or use Compare in the tray, to view scores, progress and all four subject means. Collect at least two other countries with verified scores to predict which is closest to Malaysia, then reveal the evidence. Tied rounded gaps are accepted. Progress and collections last for the current visit only. This release is deployed to the private test site; no change is made to the separate Vercel deployment.

@@ -1,9 +1,10 @@
+import {setupComparison} from './comparison-game.js?v=10';
 import {countries,subjects,malaysia,oecd,signed,format} from './data.js';
 import {regions,regionOf,members,pageOf,subjectColours,quests,walkRoute} from './world-model.js';
 const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const state={region:'sea',page:0,subject:'science',selected:'MYS'};
 const visits=new Set(),scienceVisits=new Set();
-let world=null;
+let world=null;let comparisonGame;function goCourtyard(done){if(world)world.courtyard(done);else done();}
 function open(id){$(id).showModal();}
 for(const dialog of document.querySelectorAll('dialog')){dialog.querySelector('.close').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});}
 function changeSubject(s){state.subject=s;document.querySelectorAll('[data-subject]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.subject===s));world?.highlight();$('status').textContent=`${subjects[s]} gateway opened. Visit a country pavilion to explore its results.`;if($('country-dialog').open)showCountry(countries.find(c=>c.code===state.selected),false);}
@@ -11,10 +12,13 @@ function changeRegion(region,page=0){state.region=region;state.page=page;$('regi
 function travel(c){for(const d of document.querySelectorAll('dialog[open]'))d.close();state.selected=c.code;if(state.region!==regionOf(c)||state.page!==pageOf(c))changeRegion(regionOf(c),pageOf(c));if(world){world.visit(c);$('status').textContent=`Walking to ${c.name}…`;}else showCountry(c);}
 function updateQuests(){const completed=quests.filter(q=>q.test(visits,scienceVisits)).length;$('quest-count').textContent=`${completed} / 3`;$('visited').textContent=`${visits.size} of 91 pavilions explored`;$('quests').innerHTML=quests.map((q,i)=>{const done=q.test(visits,scienceVisits);return `<section class="quest ${done?'complete':''}"><h3>${done?'✓':'◇'} ${q.title}</h3><p>${q.text}</p><details><summary>Hint</summary><p>${q.hint}</p></details><button data-quest="${i}">${done?'Explore again':'Take me there'} ↗</button></section>`;}).join('');}
 function showCountry(c,mark=true){
- state.selected=c.code;if(mark){visits.add(c.code);if(state.subject==='science')scienceVisits.add(c.code);updateQuests();}const s=state.subject,n=c[s],gap=n==null?null:n-malaysia[s];
+ state.selected=c.code;if(mark){visits.add(c.code);if(state.subject==='science')scienceVisits.add(c.code);updateQuests();}if($('learning-mode').value==='guess'){
+ $('country-content').innerHTML=`<p class="eyebrow">GUESS FIRST · SCORES HIDDEN</p><h2>${esc(c.name)}</h2><p>Collect this card, then visit another country. In the courtyard, choose at least two countries beside Malaysia, make your guess and reveal the comparison.</p><p class="muted">Choose Explore scores in Play style whenever you want to browse results directly.</p>`;
+ if(!$('country-dialog').open)open('country-dialog');if(mark)document.dispatchEvent(new CustomEvent('pisa-visit',{detail:c.code}));world?.highlight();return;
+ }const s=state.subject,n=c[s],gap=n==null?null:n-malaysia[s];
  const bars=[{name:c.name,n},...(c.code==='MYS'?[]:[{name:'Malaysia',n:malaysia[s],colour:'#bd924c'}]),{name:'OECD average',n:oecd[s],colour:'#708b94'}];
  $('country-content').innerHTML=`<p class="eyebrow">${c.code==='MYS'?'YOUR COMPARISON ANCHOR':esc(regions[regionOf(c)])}</p><h2>${esc(c.name)}${c.caution?'*':''}</h2><span class="chip">${subjects[s]} · PISA 2025</span><div class="score ${n==null?'missing':''}">${format(n)}${n==null?'':'<small>score points</small>'}</div><p>${n==null?'No verified score for this subject in the current snapshot.':c.code==='MYS'?`${Math.abs(n-oecd[s])} points ${n>=oecd[s]?'above':'below'} the OECD average.`:gap===0?'The same rounded mean score as Malaysia.':`${Math.abs(gap)} points ${gap>0?'above':'below'} Malaysia.`}</p>${bars.map(b=>`<div class="bar"><div><span>${esc(b.name)}</span><b>${format(b.n)}</b></div>${b.n==null?'':`<progress style="--bar:${b.colour||'#418b80'}" max="650" value="${b.n}" aria-label="${esc(b.name)}: ${b.n} score points"></progress>`}</div>`).join('')}<p>2022–2025 change: <b>${c.changes[s]==null?'Not available':signed(c.changes[s])}</b>${c.ns.includes(s)?'<br><span class="muted">This change was not statistically significant.</span>':''}</p>${c.note?`<p class="muted">${esc(c.note)}</p>`:''}${c.caution?'<p class="muted">* OECD sampling caution applies. Consult the original country notes.</p>':''}<p class="muted">Scores are not percentages. Small gaps are not necessarily statistically meaningful. Pavilions have equal size and do not represent rankings.</p><div class="actions"><a href="${s==='science'||s==='digital'||c.code==='BSZ'?c.source:c.profile}" target="_blank" rel="noopener">OECD source ↗</a><a href="compare.html?country=${c.code}&subject=${s}">Full comparison ↗</a></div>`;
- if(!$('country-dialog').open)open('country-dialog');$('status').textContent=`You reached ${c.name}. Explore the results or close the panel to continue.`;world?.highlight();
+ if(!$('country-dialog').open)open('country-dialog');$('status').textContent=`You reached ${c.name}. Explore the results or close the panel to continue.`;world?.highlight();if(mark)document.dispatchEvent(new CustomEvent('pisa-visit',{detail:c.code}));
 }
 $('subjects').innerHTML=Object.entries(subjects).map(([s,label])=>`<button data-subject="${s}" aria-pressed="${s===state.subject}"><i style="--subject:#${subjectColours[s].toString(16)}"></i>${label}</button>`).join('');
 $('subjects').onclick=e=>{const b=e.target.closest('[data-subject]');if(b)changeSubject(b.dataset.subject);};
@@ -25,6 +29,8 @@ function directory(){const q=$('filter').value.toLowerCase();$('directory-list')
 $('directory-open').onclick=()=>{directory();open('directory-dialog');};$('filter').oninput=directory;$('directory-list').onclick=e=>{const b=e.target.closest('[data-country]');if(b)travel(countries.find(c=>c.code===b.dataset.country));};
 $('quest-open').onclick=()=>{updateQuests();open('quest-dialog');};$('quests').onclick=e=>{const b=e.target.closest('[data-quest]');if(b){$('quest-dialog').close();const i=+b.dataset.quest;if(i===1)changeSubject('science');changeRegion(quests[i].region);}};
 $('help-open').onclick=()=>open('help-dialog');$('previous').onclick=()=>changeRegion(state.region,state.page-1);$('next').onclick=()=>changeRegion(state.region,state.page+1);$('home').onclick=()=>{changeRegion('sea');world?.reset();};$('reset').onclick=()=>world?.reset();$('zoom-in').onclick=()=>world?.zoom(.85);$('zoom-out').onclick=()=>world?.zoom(1.18);
+$('learning-mode').addEventListener('change',()=>{for(const d of document.querySelectorAll('dialog[open]'))d.close();$('status').textContent=$('learning-mode').value==='guess'?'Guess first: collect cards without seeing scores.':'Explore scores: country results are visible.';});
+comparisonGame=setupComparison({travel,goCourtyard});
 changeRegion('sea');updateQuests();
 async function start(){
  const T=await import('./vendor/three.module.js');
@@ -46,6 +52,7 @@ async function start(){
   destination=[];arrival=null;labels.forEach(l=>l.b.remove());labels=[];targets=[];pavilions=[];gates=[];const mats=new Set(),geometries=new Set();campus.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)mats.add(o.material);});campus.clear();geometries.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());
   cylinder(29,25,2.8,material(0x698b80),0,-1.5,0,undefined,64);cylinder(29,29,.15,material(0x8eaf8e),0,-.05,0,undefined,64);
   cylinder(6,6,.08,material(0xc6ccaf),0,.02,0,undefined,48);cylinder(4.5,4.5,.09,material(0xa6bba0),0,.04,0,undefined,48);
+  const station=new T.Group();campus.add(station);cylinder(1.4,1.7,.7,material(0xd8c492),0,.35,8,station);box(1.8,.12,1.2,material(0x376b64),0,.78,8,station);clickable(station,()=>goCourtyard(()=>comparisonGame.open()));label('Comparison courtyard',[0,1.8,8],()=>goCourtyard(()=>comparisonGame.open()),'portal courtyard');
   // Shared knowledge tree, outside the central walking line.
   cylinder(2.2,2.5,.5,material(0xc6d3b5),0,.25,-5);cylinder(1.8,1.8,.1,material(0x4e9998,{metalness:.15}),0,.55,-5);tree(0,-5,1.8);
   for(let i=0;i<23;i++){const angle=i/23*Math.PI*2;tree(Math.cos(angle)*25,Math.sin(angle)*25,.7+(i%3)*.18);}
@@ -70,14 +77,15 @@ async function start(){
  function visit(c){const p=pavilions.find(p=>p.c.code===c.code);if(!p)return;destination=walkRoute(avatar.position,{x:p.x,z:p.z+3},blocked).map(([x,z])=>new T.Vector3(x,0,z));arrival=()=>showCountry(c);follow=true;distance=innerWidth<650?19:16;tilt=.62;theta=0;highlight();}
  function reset(){follow=false;theta=.15;distance=innerWidth<650?64:52;viewDistance=distance;tilt=.83;cameraFocus.set(0,0,0);}
  function zoom(f){distance=T.MathUtils.clamp(distance*f,follow?10:22,85);}
- world={build,visit,highlight,reset,zoom};build();reset();
+ function courtyard(done){destination=walkRoute(avatar.position,{x:0,z:10},blocked).map(([x,z])=>new T.Vector3(x,0,z));arrival=done;follow=true;distance=19;tilt=.62;theta=0;}
+ world={build,visit,highlight,reset,zoom,courtyard};build();reset();
  function size(){const r=$('scene').getBoundingClientRect();renderer.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}new ResizeObserver(size).observe($('scene'));size();
  const pointers=new Map();let down=null,moved=false,pinch=0;
  renderer.domElement.addEventListener('pointerdown',e=>{renderer.domElement.focus({preventScroll:true});renderer.domElement.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1){down={x:e.clientX,y:e.clientY};moved=false;}else{moved=true;const p=[...pointers.values()];pinch=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}});
  renderer.domElement.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const old=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const p=[...pointers.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(d>0&&pinch>0)zoom(pinch/d);pinch=d;}else if(down){if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>6)moved=true;if(moved)theta-=(e.clientX-old.x)*.008;}});
  renderer.domElement.addEventListener('pointerup',e=>{pointers.delete(e.pointerId);if(!moved&&down){const r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(pointer,camera);const found=ray.intersectObjects(targets,false)[0];if(found)found.object.userData.action();else if(ray.ray.intersectPlane(plane,hit)&&Math.hypot(hit.x,hit.z)<22){destination=walkRoute(avatar.position,hit,blocked).map(([x,z])=>new T.Vector3(x,0,z));arrival=null;}}if(!pointers.size)down=null;});renderer.domElement.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);down=null;});renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();zoom(Math.exp(e.deltaY*.001));},{passive:false});
  const keys=new Set();renderer.domElement.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)){e.preventDefault();keys.add(e.key);destination=[];arrival=null;}});window.addEventListener('keyup',e=>keys.delete(e.key));renderer.domElement.addEventListener('blur',()=>keys.clear());
- function blocked(x,z){return Math.hypot(x,z)>23||Math.hypot(x,z+5)<2.5||pavilions.some(p=>Math.abs(x-p.x)<2.8&&Math.abs(z-p.z)<2.3);}
+ function blocked(x,z){return Math.hypot(x,z)>23||Math.hypot(x,z-8)<1.7||Math.hypot(x,z+5)<2.5||pavilions.some(p=>Math.abs(x-p.x)<2.8&&Math.abs(z-p.z)<2.3);}
  let last=performance.now(),phase=0;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  function frame(now){requestAnimationFrame(frame);if(now-last<1000/30)return;const dt=Math.min((now-last)/1000,.05);last=now;if(document.hidden)return;let walking=false;
  if(!document.querySelector('dialog[open]')){
