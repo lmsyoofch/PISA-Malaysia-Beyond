@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102f36"/><stop offset="1" stop-color="#245d5f"/></linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#a9cfb6"/><stop offset="1" stop-color="#5d9b83"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1000" cy="95" r="170" fill="#e5c47e" opacity=".16"/>
+  <path d="M0 430 Q280 330 560 430 T1200 370 V630 H0Z" fill="url(#ground)"/>
+  <path d="M570 630 Q650 505 820 420" fill="none" stroke="#f8e6ad" stroke-width="36" opacity=".9"/>
+  <g fill="#f8e6ad" stroke="#214a4e" stroke-width="8">
+    <path d="M750 430 l80 -42 80 42 v90 h-160z"/><path d="M730 430 l100 -62 100 62z"/>
+    <path d="M930 355 l65 -34 65 34 v74 h-130z"/><path d="M915 355 l80 -52 80 52z"/>
+    <path d="M1020 500 l60 -31 60 31 v70 h-120z"/><path d="M1006 500 l74 -47 74 47z"/>
+  </g>
+  <g fill="#377766"><circle cx="850" cy="260" r="58"/><circle cx="935" cy="215" r="48"/><circle cx="1050" cy="280" r="64"/><rect x="838" y="300" width="24" height="105" fill="#6e563c"/><rect x="923" y="250" width="22" height="100" fill="#6e563c"/><rect x="1038" y="325" width="25" height="95" fill="#6e563c"/></g>
+  <g fill="#f2d38b"><circle cx="655" cy="525" r="12"/><circle cx="700" cy="550" r="8"/><circle cx="740" cy="520" r="7"/></g>
+  <text x="72" y="174" fill="#f8e6ad" font-family="Arial,Helvetica,sans-serif" font-size="58" font-weight="700">PISA: Malaysia &amp; Beyond</text>
+  <text x="76" y="238" fill="#d8eee6" font-family="Arial,Helvetica,sans-serif" font-size="32">Explore · Compare · Understand</text>
+  <rect x="76" y="285" width="320" height="4" fill="#e5c47e"/>
+  <text x="76" y="340" fill="#d8eee6" font-family="Arial,Helvetica,sans-serif" font-size="23">An interactive learning world built</text>
+  <text x="76" y="375" fill="#d8eee6" font-family="Arial,Helvetica,sans-serif" font-size="23">from PISA 2025 data.</text>
+  <circle cx="640" cy="520" r="16" fill="#172f35"/><circle cx="640" cy="493" r="11" fill="#e5c47e"/>
+</svg>
