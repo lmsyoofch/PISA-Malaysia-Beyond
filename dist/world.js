@@ -7,7 +7,7 @@ let world=null;
 function open(id){$(id).showModal();}
 for(const dialog of document.querySelectorAll('dialog')){dialog.querySelector('.close').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});}
 function changeSubject(s){state.subject=s;document.querySelectorAll('[data-subject]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.subject===s));world?.highlight();$('status').textContent=`${subjects[s]} gateway opened. Visit a country pavilion to explore its results.`;if($('country-dialog').open)showCountry(countries.find(c=>c.code===state.selected),false);}
-function changeRegion(region,page=0){state.region=region;state.page=page;$('region').value=region;$('place').textContent=region==='sea'?'Malaysia plaza':regions[region]+' garden';const count=Math.ceil(members(region).length/8);$('page').textContent=`${page+1} / ${count}`;$('previous').disabled=page===0;$('next').disabled=page===count-1;world?.build();$('status').textContent=`Welcome to ${regions[region]}. Tap a pavilion to explore.`;}
+function changeRegion(region,page=0){state.region=region;state.page=page;$('region').value=region;$('place').textContent=region==='sea'?'Southeast Asia plaza':regions[region]+' garden';const count=Math.ceil(members(region).length/8);$('page').textContent=`${page+1} / ${count}`;$('previous').disabled=page===0;$('next').disabled=page===count-1;world?.build();$('status').textContent=`Welcome to ${regions[region]}. Tap a pavilion to explore.`;}
 function travel(c){for(const d of document.querySelectorAll('dialog[open]'))d.close();state.selected=c.code;if(state.region!==regionOf(c)||state.page!==pageOf(c))changeRegion(regionOf(c),pageOf(c));if(world){world.visit(c);$('status').textContent=`Walking to ${c.name}…`;}else showCountry(c);}
 function updateQuests(){const completed=quests.filter(q=>q.test(visits,scienceVisits)).length;$('quest-count').textContent=`${completed} / 3`;$('visited').textContent=`${visits.size} of 91 pavilions explored`;$('quests').innerHTML=quests.map((q,i)=>{const done=q.test(visits,scienceVisits);return `<section class="quest ${done?'complete':''}"><h3>${done?'✓':'◇'} ${q.title}</h3><p>${q.text}</p><details><summary>Hint</summary><p>${q.hint}</p></details><button data-quest="${i}">${done?'Explore again':'Take me there'} ↗</button></section>`;}).join('');}
 function showCountry(c,mark=true){
@@ -30,7 +30,7 @@ async function start(){
  const T=await import('./vendor/three.module.js');
  const scene=new T.Scene();scene.background=new T.Color('#a9cac7');scene.fog=new T.Fog('#a9cac7',65,130);
  const renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.outputColorSpace=T.SRGBColorSpace;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;$('scene').appendChild(renderer.domElement);renderer.domElement.tabIndex=0;renderer.domElement.setAttribute('aria-label','Learning garden. Arrow keys or WASD to walk. Drag to rotate. Use country directory for accessible navigation.');
- const camera=new T.PerspectiveCamera(42,1,.1,180);let theta=.15,distance=52,tilt=.83;
+ const camera=new T.PerspectiveCamera(42,1,.1,180);let theta=.15,distance=52,tilt=.83,follow=false,viewDistance=52;const cameraFocus=new T.Vector3();
  scene.add(new T.HemisphereLight(0xe4ffef,0x3c585b,2.4));const sun=new T.DirectionalLight(0xffe5b4,3);sun.position.set(-20,35,15);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-30,right:30,top:30,bottom:-30});sun.shadow.normalBias=.06;scene.add(sun);
  const campus=new T.Group();scene.add(campus);let labels=[],targets=[],pavilions=[],gates=[],destination=[],arrival=null;const ray=new T.Raycaster(),pointer=new T.Vector2(),plane=new T.Plane(new T.Vector3(0,1,0),0),hit=new T.Vector3();
  const material=(colour,extra={})=>new T.MeshStandardMaterial({color:colour,roughness:.8,...extra});
@@ -64,12 +64,12 @@ async function start(){
   Object.entries(subjects).forEach(([s,name],i)=>{const x=-9+i*6,z=21;const group=new T.Group();group.position.set(x,0,z);campus.add(group);const mat=material(subjectColours[s],{emissive:subjectColours[s],emissiveIntensity:.15});box(.35,2.8,.5,mat,-1,1.4,0,group);box(.35,2.8,.5,mat,1,1.4,0,group);box(2.4,.4,.5,mat,0,2.8,0,group);const disk=cylinder(1.5,1.5,.08,mat,0,.08,0,group);gates.push({s,disk});clickable(group,()=>changeSubject(s));label(s==='digital'?'Computing':name,[x,3.5,z],()=>changeSubject(s),'subject');});
   const regionKeys=Object.keys(regions),current=regionKeys.indexOf(state.region);
   [-1,1].forEach((direction,i)=>{const key=regionKeys[(current+direction+regionKeys.length)%regionKeys.length],x=i===0?-20:20,z=-20;const g=new T.Group();g.position.set(x,0,z);campus.add(g);const mat=material(0x5e8aab,{emissive:0x38648e,emissiveIntensity:.5});box(.45,4,.8,mat,-1.2,2,0,g);box(.45,4,.8,mat,1.2,2,0,g);box(2.8,.45,.8,mat,0,4,0,g);clickable(g,()=>changeRegion(key));label(regions[key]+' ↗',[x,4.8,z],()=>changeRegion(key),'portal');});
-  avatar.position.set(0,0,5);highlight();
+  avatar.position.set(0,0,5);reset();highlight();
  }
  function highlight(){pavilions.forEach(p=>{p.ring.visible=p.c.code===state.selected;p.b.classList.toggle('selected',p.c.code===state.selected);});gates.forEach(g=>g.disk.scale.setScalar(g.s===state.subject?1.18:1));}
- function visit(c){const p=pavilions.find(p=>p.c.code===c.code);if(!p)return;destination=walkRoute(avatar.position,{x:p.x,z:p.z+3},blocked).map(([x,z])=>new T.Vector3(x,0,z));arrival=()=>showCountry(c);highlight();}
- function reset(){theta=.15;distance=innerWidth<650?64:52;tilt=.83;}
- function zoom(f){distance=T.MathUtils.clamp(distance*f,22,85);}
+ function visit(c){const p=pavilions.find(p=>p.c.code===c.code);if(!p)return;destination=walkRoute(avatar.position,{x:p.x,z:p.z+3},blocked).map(([x,z])=>new T.Vector3(x,0,z));arrival=()=>showCountry(c);follow=true;distance=innerWidth<650?19:16;tilt=.62;theta=0;highlight();}
+ function reset(){follow=false;theta=.15;distance=innerWidth<650?64:52;viewDistance=distance;tilt=.83;cameraFocus.set(0,0,0);}
+ function zoom(f){distance=T.MathUtils.clamp(distance*f,follow?10:22,85);}
  world={build,visit,highlight,reset,zoom};build();reset();
  function size(){const r=$('scene').getBoundingClientRect();renderer.setSize(r.width,r.height);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}new ResizeObserver(size).observe($('scene'));size();
  const pointers=new Map();let down=null,moved=false,pinch=0;
@@ -88,8 +88,11 @@ async function start(){
   }else{avatar.position.x=x;avatar.position.z=z;avatar.rotation.y=Math.atan2(delta.x,delta.z);walking=true;}}}
  }
  phase+=dt*12;legs.forEach((leg,i)=>leg.rotation.x=walking&&!reduced?Math.sin(phase+i*Math.PI)*.55:0);arms.forEach((arm,i)=>arm.rotation.x=walking&&!reduced?Math.sin(phase+i*Math.PI+Math.PI)*.4:0);
- camera.position.set(Math.sin(theta)*Math.cos(tilt)*distance,Math.sin(tilt)*distance,Math.cos(theta)*Math.cos(tilt)*distance);camera.lookAt(0,0,0);camera.updateMatrixWorld();
- const w=renderer.domElement.clientWidth,h=renderer.domElement.clientHeight;for(const l of labels){const p=l.position.clone().project(camera);l.b.style.left=`${(p.x+1)/2*w}px`;l.b.style.top=`${(1-p.y)/2*h}px`;l.b.hidden=p.z>1||p.x<-.98||p.x>.98||p.y<-.9||p.y>.8;}
+ const ease=reduced?1:1-Math.exp(-dt*4);
+ const focus=follow?new T.Vector3(avatar.position.x,1,avatar.position.z):new T.Vector3();
+ cameraFocus.lerp(focus,ease);viewDistance+=(distance-viewDistance)*ease;
+ camera.position.set(cameraFocus.x+Math.sin(theta)*Math.cos(tilt)*viewDistance,cameraFocus.y+Math.sin(tilt)*viewDistance,cameraFocus.z+Math.cos(theta)*Math.cos(tilt)*viewDistance);camera.lookAt(cameraFocus);camera.updateMatrixWorld();
+ const w=renderer.domElement.clientWidth,h=renderer.domElement.clientHeight;for(const l of labels){const p=l.position.clone().project(camera);l.b.style.left=`${(p.x+1)/2*w}px`;l.b.style.top=`${(1-p.y)/2*h}px`;l.b.hidden=(follow&&l.position.distanceTo(avatar.position)>10)||p.z>1||p.x<-.98||p.x>.98||p.y<-.9||p.y>.8;}
  renderer.render(scene,camera);
  }
  renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();$('loading').hidden=false;$('loading').innerHTML='<strong>The 3D view paused.</strong><p>Reload to restore it or use Countries and Compare data.</p>';});

@@ -1,6 +1,6 @@
 # PISA: Malaysia & Beyond, Learning World
 
-The default page is now an interactive 3D learning garden. Start at Malaysia plaza, walk an avatar to country pavilions and explore results through four subject gateways. The previous map, charts and table remain at `compare.html`.
+The default page is now an interactive 3D learning garden. Start at Southeast Asia plaza, walk an avatar to country pavilions and explore results through four subject gateways. The previous map, charts and table remain at `compare.html`.
 
 ## Deploy this update
 
@@ -14,7 +14,7 @@ No API key is needed. The complete Three.js 0.170.0 engine and its MIT licence a
 ## Explore
 
 - Tap open ground to walk. Tap a pavilion or its name to walk there and open the results.
-- Drag to rotate. Pinch or use + / − to zoom. Use the home button to return to Malaysia plaza.
+- Drag to rotate. Pinch or use + / − to zoom. Use the home button to return to Southeast Asia plaza.
 - Focus the scene and use WASD or arrow keys to walk with a keyboard.
 - Use the region selector or blue portals to travel between seven regional campuses. Arrows page through sets of up to eight equal-sized pavilions.
 - Four coloured gateways and the subject buttons switch the domain.
@@ -94,3 +94,7 @@ Small-economy and regional dots now use fixed pixel radii (4 px on phones and 5 
 ## World boundary correction
 
 Country polygons are split at the international date line before rendering, preventing edges from crossing the full map. The build includes regression checks for crossing polygons, exact date-line coordinates and preserved polygon area.
+
+## Follow camera update
+
+The regional starting area is named Southeast Asia plaza. Selecting a pavilion smoothly moves the camera closer and follows the walking avatar. The close view stays at arrival; Reset camera returns to the regional overview. Changing campus or returning home also resets the camera. Reduced-motion preferences make the camera transition immediate.
