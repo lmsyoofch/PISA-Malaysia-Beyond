@@ -6,6 +6,7 @@ const state={region:'sea',page:0,subject:'science',selected:'MYS'};
 const visits=new Set(),scienceVisits=new Set();
 let world=null;let comparisonGame;function goCourtyard(done){if(world)world.courtyard(done);else done();}
 function open(id){$(id).showModal();}
+$('welcome-close').onclick=()=>{$('welcome').classList.add('is-hidden');};
 for(const dialog of document.querySelectorAll('dialog')){dialog.querySelector('.close').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});}
 function changeSubject(s){state.subject=s;document.querySelectorAll('[data-subject]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.subject===s));world?.highlight();$('status').textContent=`${subjects[s]} gateway opened. Visit a country pavilion to explore its results.`;if($('country-dialog').open)showCountry(countries.find(c=>c.code===state.selected),false);}
 function changeRegion(region,page=0){state.region=region;state.page=page;$('region').value=region;$('place').textContent=region==='sea'?'Southeast Asia plaza':regions[region]+' garden';const count=Math.ceil(members(region).length/8);$('page').textContent=`${page+1} / ${count}`;$('previous').disabled=page===0;$('next').disabled=page===count-1;world?.build();$('status').textContent=`Welcome to ${regions[region]}. Tap a pavilion to explore.`;}
